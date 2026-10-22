@@ -59,6 +59,7 @@ class Platform:
 # SKILL templates. Migrated here from app.py:3363-3372 so the registry is the
 # single source of truth.
 INVOCATIONS: dict[str, dict[str, str]] = {
+    "maxcx": {"cli": "maxcx", "cli_module": "maxcx"},
     "maxc": {
         "cli": "maxc",
         # `python3 -m` (not `python`) matches the legacy _SKILL_INVOCATIONS at

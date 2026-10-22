@@ -1,43 +1,28 @@
-# Personal build channel
+# X distribution
 
-This branch adds build-only automation on top of the existing candidate branch.
-It does not publish to OSS, PyPI, GitHub Releases or a Homebrew tap, install a CLI,
-or access live cloud credentials. Push this branch to the personal fork to run;
-workflow_dispatch is also available after the workflow reaches the default branch.
-The four upstream PR branches remain separate and unchanged.
+The fork build channel publishes `maxcx` version `0.9.4-x.1`. Commands are
+`aliyunx` and `maxcx`; neither installs an `aliyun` or `maxc` alias. Homebrew
+formulae have the same names and can coexist with the official installation.
+The repository and maintenance branch names are unchanged. Upstream PR branches
+remain separate; branding changes belong only to `build/personal-packages`.
 
-The first matrix targets macOS Intel/Apple Silicon and Linux amd64/arm64.
-Linux MaxC bundles require the runner baseline (Ubuntu 22.04 / glibc 2.35);
-they do not claim the official manylinux2014 compatibility. macOS packages are
-not Developer ID signed or notarized. Windows packaging is not in this matrix.
-Artifacts are CI candidates, not stable releases, and expire under Actions retention.
-Source commit, checksums and dependency/build information accompany each package.
-Dependency versions are recorded but are not yet a fully locked reproducible build.
+Install with `brew install xuhuanxxx/tap/aliyunx xuhuanxxx/tap/maxcx`.
+Use `brew upgrade aliyunx maxcx` to upgrade. AliyunX disables the official
+self-updater so it cannot replace itself with an upstream binary.
 
-The Python candidate includes the experimental bearer provider; the Go candidate
-includes its credential interface and OAuth fixes. Packaging is not official
-endorsement of cross-region bearer use. The RFC support boundaries still apply.
-Go native mc and the old maxc wrapper redesign are not included in this branch.
+MaxCX bundles Python and requires no project virtual environment. Its bearer
+provider defaults to `aliyunx`; an explicitly configured executable is respected.
+Existing auth/configuration and job formats remain compatible and are not migrated
+by installation. The official Go `maxc` plugin wrapper is not redirected to MaxCX;
+invoke `maxcx` directly.
 
-## Homebrew follow-up
+Four CI platforms: macOS Intel/Apple Silicon and Linux amd64/arm64. Linux requires
+glibc 2.35 or later. macOS binaries are not Developer ID signed/notarized. The
+release records source revision and dependency/build metadata; this is not a
+fully locked reproducible build. Version output includes the X version and source
+revision. GitHub Release assets are immutable inputs to SHA256-pinned formulae.
 
-Use a personal homebrew-tap repository and separately named, keg-only formulae
-so the official CLI is not overwritten. Publish immutable, tested versioned release
-assets first; the formula then pins their URLs and SHA256. A Python bundle contains
-its own runtime and must install the entire PyInstaller onedir, not just maxc.
-Wire the intended Go credential executable explicitly; do not assume PATH selects
-the patched CLI. Do not redirect the official plugin updater to personal packages
-or claim Go's maxc wrapper already selects this bundle. That integration needs its
-own isolated acceptance test before recommending an installation command.
-
-Public redistribution is not enabled: this checkout has no root LICENSE file or license declaration in setup.py. Confirm the upstream redistribution terms before publishing a public binary release. Private build validation can proceed.
-
-## Local validation (2026-10-22)
-
-- actionlint passed.
-- macOS arm64 bundle built with an isolated Homebrew Python 3.13 environment.
-- Five PyInstaller bundle tests passed; extracted --version and agent manifest succeeded with PATH=/usr/bin:/bin and a temporary HOME. CI uses Python 3.11.
-- Fixed a test-only dependency on the developer pagination cache: make_app now isolates cache_dir as well as state_dir, and the missing-session test explicitly initializes an empty cache. Focused suite: 41 passed.
-- Other matrix platforms require GitHub Actions execution; no cross-platform success is claimed from this local run.
-
-Final isolated default test suite: 1720 passed, 1 skipped, 138 deselected (61.75s). No live cloud validation was run.
+Bearer use remains opt-in and experimental; successful cross-region tests are not
+an official support commitment. Python 0.9.4 upstream has no explicit Python
+license declaration in the inspected metadata; do not infer its license from the
+Java tree. Personal release authorization does not resolve that upstream question.

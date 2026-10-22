@@ -135,6 +135,8 @@ def effective_sql_hints_for_output(
 
 def current_cli_entry_point() -> 'str':
     """Return the safe, normalized command prefix for this distribution."""
+    if Path(sys.argv[0]).name in {"maxcx", "maxcx.exe"}:
+        return "maxcx"
     raw = os.environ.get("MAXC_CLI_NAME", "")
     normalized = " ".join(raw.split())
     if normalized and _CLI_ENTRY_POINT_RE.fullmatch(normalized):

@@ -14,11 +14,12 @@ from urllib.parse import urlparse
 
 from .catalog_bootstrap import region_to_endpoint
 from .exceptions import ValidationError
+from .utils import current_cli_entry_point
 
 
 @dataclass
 class BearerAuthConfig:
-    cli: str = "aliyun"
+    cli: str = field(default_factory=lambda: "aliyunx" if current_cli_entry_point() == "maxcx" else "aliyun")
     profile: str = ""
     config_path: str | None = None
     issuer_region: str = ""

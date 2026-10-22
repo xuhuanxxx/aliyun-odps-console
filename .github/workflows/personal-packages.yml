@@ -1,4 +1,4 @@
-name: Personal MaxC packages
+name: MaxCX packages
 on:
   workflow_dispatch:
   push:
@@ -34,6 +34,9 @@ jobs:
         run: |
           test_home=$(mktemp -d)
           HOME="$test_home" python -m pytest -q
+      - name: Stamp X build identity
+        run: |
+          python -c 'import json,subprocess; from pathlib import Path; Path("src/maxc_cli/x_build.json").write_text(json.dumps({"version":"0.9.4-x.1","commit":subprocess.check_output(["git","rev-parse","--short=12","HEAD"],text=True).strip()}))'
       - name: Build using upstream bundler
         run: bash scripts/build_release.sh
       - name: Smoke test standalone runtime in isolated home
@@ -50,6 +53,16 @@ jobs:
           env -i HOME="$test_home" PATH=/usr/bin:/bin "$stage/maxc/maxc" --version
           env -i HOME="$test_home" PATH=/usr/bin:/bin "$stage/maxc/maxc" agent manifest --json > "$stage/manifest.json"
           python -c 'import json,sys; assert json.load(open(sys.argv[1]))["status"] == "success"' "$stage/manifest.json"
+      - name: Package MaxCX executable
+        shell: bash
+        run: |
+          mv dist/maxc/maxc dist/maxc/maxcx
+          mv dist/maxc dist/maxcx
+          COPYFILE_DISABLE=1 tar -czf dist/release/maxcx.tar.gz -C dist maxcx
+          rm dist/release/maxc.tar.gz*
+          test_home=$(mktemp -d)
+          HOME="$test_home" dist/maxcx/maxcx --version
+          HOME="$test_home" dist/maxcx/maxcx job wait --help | grep maxcx
       - name: Record source and dependency versions
         shell: bash
         run: |
@@ -57,7 +70,7 @@ jobs:
           python --version > dist/release/PYTHON_VERSION
           python -m pip freeze > dist/release/BUILD_DEPENDENCIES.txt
           cd dist/release
-          shasum -a 256 maxc.tar.gz SOURCE_COMMIT PYTHON_VERSION BUILD_DEPENDENCIES.txt > SHA256SUMS
+          shasum -a 256 maxcx.tar.gz SOURCE_COMMIT PYTHON_VERSION BUILD_DEPENDENCIES.txt > SHA256SUMS
           shasum -a 256 -c SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
