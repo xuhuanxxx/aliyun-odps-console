@@ -1,0 +1,56 @@
+name: PR 53 validation only
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: macos-14, platform: darwin-arm64}
+          - {runner: macos-15-intel, platform: darwin-amd64}
+          - {runner: ubuntu-22.04, platform: linux-amd64}
+          - {runner: ubuntu-22.04-arm, platform: linux-arm64}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: c5a1607a7e864194021976236eacb96ee6c68e72
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install -e .
+          python -m pip install -r requirements-bundle.txt ruff
+      - name: Targeted regression tests
+        run: |
+          ruff check tests/test_timestamp_runtime.py src/maxc_cli/backend/meta.py src/maxc_cli/config.py src/maxc_cli/app.py tests/test_pyinstaller_bundle.py
+          python -m pytest -q tests/test_timestamp_runtime.py tests/test_backend_meta.py tests/test_meta_schema_and_partition_cols.py tests/test_helpers.py
+      - name: Full suite
+        run: |
+          test_home=$(mktemp -d)
+          HOME="$test_home" python -m pytest -q --ignore=tests/test_pyinstaller_bundle.py
+      - name: Build standalone bundle
+        if: ${{ !cancelled() }}
+        run: bash scripts/build_release.sh
+      - name: Bundle tests
+        if: ${{ !cancelled() }}
+        run: |
+          test_home=$(mktemp -d)
+          HOME="$test_home" python -m pytest tests/test_pyinstaller_bundle.py -q
+      - name: Record provenance
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p dist/release
+          git rev-parse HEAD > dist/release/SOURCE_COMMIT
+          python -m pip freeze > dist/release/BUILD_DEPENDENCIES.txt
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: pr53-${{ matrix.platform }}
+          path: dist/release/
+          if-no-files-found: error
+          retention-days: 14
