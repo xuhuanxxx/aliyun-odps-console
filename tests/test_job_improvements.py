@@ -22,13 +22,14 @@ def make_app(tmp_path: Path) -> MaxCApp:
     """Return a MaxCApp backed only by the local job store (no ODPS backend).
 
     Uses load_backend=False so no credentials are needed.
-    Overrides state_dir to tmp_path/state to isolate each test's job store.
+    Overrides state_dir and cache_dir to isolate jobs and pagination sessions.
     """
     config_path = tmp_path / "config.yaml"
     config_path.write_text("default_project: test_project\n", encoding="utf-8")
     app = MaxCApp(cwd=tmp_path, config_path=config_path, load_backend=False)
     app.remote_jobs = False
     app.config.state_dir = tmp_path / "state"  # isolate from other tests
+    app.config.cache_dir = tmp_path / "cache"
     return app
 
 
@@ -490,10 +491,11 @@ def test_job_result_rejects_missing_local_cursor_context(tmp_path: Path) -> None
     app = make_app(tmp_path)
     job_id = _make_job_with_rows(app, 5)
 
-    # A fabricated session has no binding to this job; the binding check rejects
-    # it before local session lookup. This is also the unmodified 0.9.4 behavior.
+    # A fabricated session is rejected during local context lookup.
+    # Cross-job binding is checked separately once a session exists.
+    assert app.cache.get_session(999) is None
     cursor = encode_cursor(2, session_id=999)
-    with pytest.raises(ValidationError, match="belongs to a different job"):
+    with pytest.raises(ValidationError, match="pagination context no longer exists"):
         app.job_result(job_id, max_rows=2, cursor=cursor)
 
 
