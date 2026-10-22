@@ -61,7 +61,7 @@ jobs:
           COPYFILE_DISABLE=1 tar -czf dist/release/maxcx.tar.gz -C dist maxcx
           rm dist/release/maxc.tar.gz*
           test_home=$(mktemp -d)
-          HOME="$test_home" dist/maxcx/maxcx --version
+          HOME="$test_home" dist/maxcx/maxcx --version | grep "0.9.4-x.1+"
           HOME="$test_home" dist/maxcx/maxcx job wait --help | grep maxcx
       - name: Record source and dependency versions
         shell: bash

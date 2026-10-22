@@ -826,7 +826,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Authenticate in the browser via Alibaba Cloud OAuth (Authorization Code + PKCE), "
-            "equivalent to `aliyun configure --mode OAuth`. Credentials refresh automatically."
+            f"equivalent to `{'aliyunx' if cli_name == 'maxcx' else 'aliyun'} configure --mode OAuth`. Credentials refresh automatically."
         ),
     )
     auth_login.add_argument(
